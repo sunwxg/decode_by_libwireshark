@@ -1,8 +1,11 @@
 #define HAVE_STDARG_H 1
 #define WS_MSVC_NORETURN
+#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <string.h>
 #include <wireshark/epan/epan.h>
 #include <wireshark/epan/print.h>
 #include <wireshark/epan/timestamp.h>
@@ -130,18 +133,40 @@ void clean()
 	epan_cleanup();
 }
 
-void print_each_packet()
+void print_tree_text(epan_dissect_t *edt, print_stream_t *print_stream)
+{
+	print_args_t print_args;
+	print_args.print_hex = TRUE;
+	print_args.print_dissections = print_dissections_expanded;
+
+	proto_tree_print(&print_args, edt, print_stream);
+
+}
+
+void print_each_packet(const char *type)
 {
 	epan_dissect_t *edt;
+	print_stream_t *print_stream;
 
-	while (read_packet(&edt)) {
+	if ((strncmp(type, "text", strlen("text")) == 0)) {
+		print_stream = print_stream_text_stdio_new(stdout);
+	}
 
-		proto_tree_write_pdml(edt, stdout);
-		/*print_packet(edt);*/
 
-		epan_dissect_free(edt);
-		edt = NULL;
-	};
+	if ((strncmp(type, "xml", strlen("xml")) == 0)) {
+		while (read_packet(&edt)) {
+			proto_tree_write_pdml(edt, stdout);
+			epan_dissect_free(edt);
+			edt = NULL;
+		}
+
+	} else {
+		while (read_packet(&edt)) {
+			print_tree_text(edt, print_stream);
+			epan_dissect_free(edt);
+			edt = NULL;
+		}
+	}
 }
 
 static void
@@ -207,19 +232,37 @@ int main(int argc, char* argv[])
 
 	int   err;
 	char *filename;
+	const char *type = NULL;
+	int opt;
 
-	if (argc < 2) {
-		printf("Usage: %s <input_file>\n", argv[0]);
-		return 1;
+	while((opt = getopt(argc, argv, "f:t:")) != -1) {
+		switch(opt) {
+			case 'f':
+				filename = calloc(sizeof(char), strlen(optarg) + 1);
+				strncpy(filename, optarg, strlen(optarg));
+				break;
+			case 't':
+				type = optarg;
+				break;
+			default:
+				printf("Usage: %s -f <input_file> ", argv[0]);
+				printf("[-t <xml|text> (default xml)]\n");
+				return 1;
+		}
 	}
-	filename= argv[1];
+
+	if (type == NULL) {
+		type = "xml";
+	} else if ((strcmp(type, "xml") != 0) && (strcmp(type, "text") != 0)) {
+		type = "xml";
+	}
 
 	err = init(filename);
 	if (err) {
 		return err;
 	}
 
-	print_each_packet();
+	print_each_packet(type);
 
 	clean();
 	return 0;
