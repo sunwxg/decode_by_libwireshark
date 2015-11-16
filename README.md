@@ -20,7 +20,7 @@ export SRC_WIRESHARK=<wireshark source code path>
 ```
 make debug
 ```
-- Use GDB
+- Using GDB
 ```
 libtool --mode=execute gdb ./myshark
 ```
