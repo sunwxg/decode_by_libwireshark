@@ -133,39 +133,36 @@ void clean()
 	epan_cleanup();
 }
 
-void print_tree_text(epan_dissect_t *edt, print_stream_t *print_stream)
+void print_each_packet_xml()
 {
-	print_args_t print_args;
-	print_args.print_hex = TRUE;
-	print_args.print_dissections = print_dissections_expanded;
+	epan_dissect_t *edt;
 
-	proto_tree_print(&print_args, edt, print_stream);
+	while (read_packet(&edt)) {
 
+		proto_tree_write_pdml(edt, stdout);
+
+		epan_dissect_free(edt);
+		edt = NULL;
+	}
 }
 
-void print_each_packet(const char *type)
+void print_each_packet_text()
 {
 	epan_dissect_t *edt;
 	print_stream_t *print_stream;
+	print_args_t    print_args;
 
-	if ((strncmp(type, "text", strlen("text")) == 0)) {
-		print_stream = print_stream_text_stdio_new(stdout);
-	}
+	print_stream = print_stream_text_stdio_new(stdout);
 
+	print_args.print_hex = TRUE;
+	print_args.print_dissections = print_dissections_expanded;
 
-	if ((strncmp(type, "xml", strlen("xml")) == 0)) {
-		while (read_packet(&edt)) {
-			proto_tree_write_pdml(edt, stdout);
-			epan_dissect_free(edt);
-			edt = NULL;
-		}
+	while (read_packet(&edt)) {
 
-	} else {
-		while (read_packet(&edt)) {
-			print_tree_text(edt, print_stream);
-			epan_dissect_free(edt);
-			edt = NULL;
-		}
+		proto_tree_print(&print_args, edt, print_stream);
+
+		epan_dissect_free(edt);
+		edt = NULL;
 	}
 }
 
@@ -262,7 +259,11 @@ int main(int argc, char* argv[])
 		return err;
 	}
 
-	print_each_packet(type);
+	if (strcmp(type, "xml") == 0) {
+		print_each_packet_xml();
+	} else {
+		print_each_packet_text();
+	}
 
 	clean();
 	return 0;
