@@ -18,6 +18,7 @@ debug:
 	${CFLAGS} ${INCLUDE} -o ${TARGET} ${SRC} \
 	${SRC_WIRESHARK}/epan/libwireshark.la \
 	${SRC_WIRESHARK}/wiretap/libwiretap.la \
+	${SRC_WIRESHARK}/epan/wmem/.libs/libwmem.la \
 	-lwsutil -lglib-2.0
 
 .PHONY: clean

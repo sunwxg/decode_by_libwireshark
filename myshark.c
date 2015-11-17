@@ -42,7 +42,6 @@ int init(char *filename)
 {
 	int          err = 0;
 	gchar       *err_info = NULL;
-	char         err_msg[2048+1];
 	e_prefs     *prefs_p;
 
 	init_process_policies();
@@ -72,9 +71,6 @@ int init(char *filename)
 
 fail:
 	clean();
-
-	g_snprintf(err_msg, sizeof err_msg, "%s", err_info);
-	fprintf(stderr, "%s", err_msg);
 	return err;
 }
 
@@ -224,11 +220,17 @@ cap_file_init(capture_file *cf)
 	cf->snap            = WTAP_MAX_PACKET_SIZE;
 }
 
+void print_usage(char *argv[])
+{
+	printf("Usage: %s -f <input_file> ", argv[0]);
+	printf("[-t <xml|text> (default xml)]\n");
+}
+
 int main(int argc, char* argv[])
 {
 
 	int   err;
-	char *filename;
+	char *filename = NULL;
 	const char *type = NULL;
 	int opt;
 
@@ -242,10 +244,14 @@ int main(int argc, char* argv[])
 				type = optarg;
 				break;
 			default:
-				printf("Usage: %s -f <input_file> ", argv[0]);
-				printf("[-t <xml|text> (default xml)]\n");
+				print_usage(argv);
 				return 1;
 		}
+	}
+
+	if (filename == NULL) {
+		print_usage(argv);
+		return 1;
 	}
 
 	if (type == NULL) {
@@ -256,7 +262,7 @@ int main(int argc, char* argv[])
 
 	err = init(filename);
 	if (err) {
-		return err;
+		return 1;
 	}
 
 	if (strcmp(type, "xml") == 0) {
