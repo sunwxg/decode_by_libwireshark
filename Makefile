@@ -14,8 +14,8 @@ default:
 	@gcc ${CFLAGS} ${INCLUDE} -o ${TARGET} ${SRC} ${LDFLAGS}
 
 debug:
-	@libtool --silent --tag=CC --mode=link gcc \
-	${CFLAGS} ${INCLUDE} -o ${TARGET} ${SRC} \
+	@libtool --silent --tag=CC --mode=link \
+	gcc ${CFLAGS} ${INCLUDE} -o ${TARGET} ${SRC} \
 	${SRC_WIRESHARK}/epan/libwireshark.la \
 	${SRC_WIRESHARK}/wiretap/libwiretap.la \
 	-lwsutil -lglib-2.0
