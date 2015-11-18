@@ -23,6 +23,11 @@ static void timestamp_set(capture_file cfile);
 static const nstime_t *tshark_get_frame_ts(void *data, guint32 frame_num);
 static void clean();
 
+typedef enum {
+	PRINT_XML,
+	PRINT_TEXT,
+}print_type_t;
+
 //global variable
 capture_file cfile;
 
@@ -229,23 +234,29 @@ void print_usage(char *argv[])
 int main(int argc, char* argv[])
 {
 
-	int   err;
-	char *filename = NULL;
-	const char *type = NULL;
-	int opt;
+	int          err;
+	char        *filename = NULL;
+	print_type_t print_type;
+	int          opt;
 
 	while((opt = getopt(argc, argv, "f:t:")) != -1) {
 		switch(opt) {
-			case 'f':
-				filename = calloc(sizeof(char), strlen(optarg) + 1);
-				strncpy(filename, optarg, strlen(optarg));
-				break;
-			case 't':
-				type = optarg;
-				break;
-			default:
-				print_usage(argv);
-				return 1;
+		case 'f':
+			filename = calloc(sizeof(char), strlen(optarg) + 1);
+			strncpy(filename, optarg, strlen(optarg));
+			break;
+		case 't':
+			if (strcmp(optarg, "xml") == 0) {
+				print_type = PRINT_XML;
+			} else if (strcmp(optarg, "text") == 0) {
+				print_type = PRINT_TEXT;
+			} else {
+				print_type = PRINT_XML;
+			}
+			break;
+		default:
+			print_usage(argv);
+			return 1;
 		}
 	}
 
@@ -254,21 +265,18 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	if (type == NULL) {
-		type = "xml";
-	} else if ((strcmp(type, "xml") != 0) && (strcmp(type, "text") != 0)) {
-		type = "xml";
-	}
-
 	err = init(filename);
 	if (err) {
 		return 1;
 	}
 
-	if (strcmp(type, "xml") == 0) {
+	switch (print_type) {
+	case PRINT_XML:
 		print_each_packet_xml();
-	} else {
+		break;
+	case PRINT_TEXT:
 		print_each_packet_text();
+		break;
 	}
 
 	clean();
