@@ -6,6 +6,7 @@ Use libwireshark to decode pcap file and print out as XML format or Text format 
 ```
 sudo apt-get install libwireshark-dev libglib2.0-dev
 make
+./myshark -f file.pcap -t text
 ```
 
 # Debug
