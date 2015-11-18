@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
 
 	int          err;
 	char        *filename = NULL;
-	print_type_t print_type;
+	print_type_t print_type = PRINT_XML;
 	int          opt;
 
 	while((opt = getopt(argc, argv, "f:t:")) != -1) {
