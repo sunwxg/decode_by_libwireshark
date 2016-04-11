@@ -4,7 +4,7 @@ Use libwireshark to decode pcap file and print out as XML format or Text format 
 # Install
 - ubuntu
 ```
-sudo apt-get install libwireshark-dev libglib2.0-dev
+sudo apt-get install libwireshark-dev libglib2.0-dev libwiretap-dev
 make
 ./myshark -f file.pcap -t text
 ```
