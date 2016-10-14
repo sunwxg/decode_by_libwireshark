@@ -1,9 +1,10 @@
 CFLAGS+= -std=c99 -g -Wall
-INCLUDE= -I/usr/include/glib-2.0
-INCLUDE+= -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
-INCLUDE+= -I/usr/include/wireshark -I/usr/include/wireshark/wiretap
-INCLUDE+= -I./include
-LDFLAGS= -lwiretap -lwireshark -lwsutil -lglib-2.0
+CFLAGS+= `pkg-config --cflags glib-2.0`
+CFLAGS+= -I./include/wireshark
+CFLAGS+= -I./include/wireshark/wiretap
+CFLAGS+= -I./include
+LDFLAGS= -L./libs -lwiretap -lwireshark -lwsutil -lglib-2.0
+LDFLAGS+= -Wl,-rpath,./libs
 
 TARGET=myshark
 SRC=$(wildcard *.c)
@@ -11,7 +12,7 @@ SRC=$(wildcard *.c)
 SRC_WIRESHARK?=~/person/wireshark-1.12.8
 
 default:
-	@gcc ${CFLAGS} ${INCLUDE} -o ${TARGET} ${SRC} ${LDFLAGS}
+	@gcc ${CFLAGS} -o ${TARGET} ${SRC} ${LDFLAGS}
 
 debug:
 	@libtool --silent --tag=CC --mode=link \
