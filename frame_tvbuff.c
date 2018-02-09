@@ -31,7 +31,7 @@
 #include "frame_tvbuff.h"
 #include "globals.h"
 
-#include "wtap-int.h" /* for ->random_fh */
+#include "wiretap/wtap-int.h" /* for ->random_fh */
 
 struct tvb_frame {
 	struct tvbuff tvb;
@@ -58,8 +58,8 @@ frame_read(struct tvb_frame *frame_tvb, struct wtap_pkthdr *phdr, Buffer *buf)
 	 * frame_tvb->tvb.length + frame_tvb->offset?
 	 */
 	if (!wtap_seek_read(frame_tvb->wth, frame_tvb->file_off, phdr, buf, &err, &err_info)) {
+		/* XXX - report error! */
 		switch (err) {
-			case WTAP_ERR_UNSUPPORTED_ENCAP:
 			case WTAP_ERR_BAD_FILE:
 				g_free(err_info);
 				break;
@@ -69,24 +69,33 @@ frame_read(struct tvb_frame *frame_tvb, struct wtap_pkthdr *phdr, Buffer *buf)
 	return TRUE;
 }
 
+static GPtrArray *buffer_cache = NULL;
+
 static void
 frame_cache(struct tvb_frame *frame_tvb)
 {
 	struct wtap_pkthdr phdr; /* Packet header */
 
-	memset(&phdr, 0, sizeof(struct wtap_pkthdr));
+	wtap_phdr_init(&phdr);
 
 	if (frame_tvb->buf == NULL) {
-		frame_tvb->buf = (struct Buffer *) g_malloc(sizeof(struct Buffer));
+		if G_UNLIKELY(!buffer_cache) buffer_cache = g_ptr_array_sized_new(1024);
 
-		/* XXX, register frame_tvb to some list which frees from time to time not used buffers :] */
-		buffer_init(frame_tvb->buf, frame_tvb->tvb.length + frame_tvb->offset);
+		if (buffer_cache->len > 0) {
+			frame_tvb->buf = (struct Buffer *) g_ptr_array_remove_index(buffer_cache, buffer_cache->len - 1);
+		} else {
+			frame_tvb->buf = (struct Buffer *) g_malloc(sizeof(struct Buffer));
+		}
+
+		ws_buffer_init(frame_tvb->buf, frame_tvb->tvb.length + frame_tvb->offset);
 
 		if (!frame_read(frame_tvb, &phdr, frame_tvb->buf))
 			{ /* TODO: THROW(???); */ }
 	}
 
-	frame_tvb->tvb.real_data = buffer_start_ptr(frame_tvb->buf) + frame_tvb->offset;
+	frame_tvb->tvb.real_data = ws_buffer_start_ptr(frame_tvb->buf) + frame_tvb->offset;
+
+	wtap_phdr_cleanup(&phdr);
 }
 
 static void
@@ -95,9 +104,8 @@ frame_free(tvbuff_t *tvb)
 	struct tvb_frame *frame_tvb = (struct tvb_frame *) tvb;
 
 	if (frame_tvb->buf) {
-		buffer_free(frame_tvb->buf);
-
-		g_free(frame_tvb->buf);
+		ws_buffer_free(frame_tvb->buf);
+		g_ptr_array_add(buffer_cache, frame_tvb->buf);
 	}
 }
 
@@ -137,13 +145,13 @@ frame_find_guint8(tvbuff_t *tvb, guint abs_offset, guint limit, guint8 needle)
 }
 
 static gint
-frame_pbrk_guint8(tvbuff_t *tvb, guint abs_offset, guint limit, const guint8 *needles, guchar *found_needle)
+frame_pbrk_guint8(tvbuff_t *tvb, guint abs_offset, guint limit, const ws_mempbrk_pattern* pattern, guchar *found_needle)
 {
 	struct tvb_frame *frame_tvb = (struct tvb_frame *) tvb;
 
 	frame_cache(frame_tvb);
 
-	return tvb_pbrk_guint8(tvb, abs_offset, limit, needles, found_needle);
+	return tvb_ws_mempbrk_pattern_guint8(tvb, abs_offset, limit, pattern, found_needle);
 }
 
 static guint
@@ -231,7 +239,7 @@ frame_tvbuff_new(const frame_data *fd, const guint8 *buf)
 tvbuff_t *
 frame_tvbuff_new_buffer(const frame_data *fd, Buffer *buf)
 {
-	return frame_tvbuff_new(fd, buffer_start_ptr(buf));
+	return frame_tvbuff_new(fd, ws_buffer_start_ptr(buf));
 }
 
 static tvbuff_t *
@@ -336,5 +344,18 @@ file_tvbuff_new(const frame_data *fd, const guint8 *buf)
 tvbuff_t *
 file_tvbuff_new_buffer(const frame_data *fd, Buffer *buf)
 {
-	return frame_tvbuff_new(fd, buffer_start_ptr(buf));
+	return frame_tvbuff_new(fd, ws_buffer_start_ptr(buf));
 }
+
+/*
+ * Editor modelines  -  http://www.wireshark.org/tools/modelines.html
+ *
+ * Local variables:
+ * c-basic-offset: 8
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * End:
+ *
+ * vi: set shiftwidth=8 tabstop=8 noexpandtab:
+ * :indentSize=8:tabSize=8:noTabs=false:
+ */
