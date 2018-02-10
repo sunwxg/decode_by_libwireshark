@@ -2,7 +2,7 @@ WIRESHARK_VERSION=2.4.4
 
 CFLAGS+= -std=c99 -g -Wall
 CFLAGS+= `pkg-config --cflags glib-2.0`
-CFLAGS+= -I./wireshark-2.4.4
+CFLAGS+= -I./wireshark-${WIRESHARK_VERSION}
 #CFLAGS+= -I/usr/include
 #CFLAGS+= -I./
 #CFLAGS+= -I./include
@@ -20,7 +20,7 @@ default:
 
 source:
 	wget https://www.wireshark.org/download/src/wireshark-${WIRESHARK_VERSION}.tar.xz
-	tar xvf wireshark-${WIRESHARK_VERSION}.tar.xz
+	tar xf wireshark-${WIRESHARK_VERSION}.tar.xz
 	@rm wireshark-${WIRESHARK_VERSION}.tar.xz
 	@cp wireshark-${WIRESHARK_VERSION}/frame_tvbuff.c .
 
