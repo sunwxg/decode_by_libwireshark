@@ -1,3 +1,5 @@
 myshark
 .libs/*
 libs/libwireshark.so
+wireshark-*
+frame_tvbuff.c
