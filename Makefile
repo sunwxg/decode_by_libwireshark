@@ -19,7 +19,7 @@ default:
 	@gcc ${CFLAGS} -o ${TARGET} ${SRC} ${LDFLAGS}
 
 source:
-	wget https://www.wireshark.org/download/src/wireshark-${WIRESHARK_VERSION}.tar.xz
+	wget https://www.wireshark.org/download/src/all-versions/wireshark-${WIRESHARK_VERSION}.tar.xz
 	tar xf wireshark-${WIRESHARK_VERSION}.tar.xz
 	@rm wireshark-${WIRESHARK_VERSION}.tar.xz
 	@cp wireshark-${WIRESHARK_VERSION}/frame_tvbuff.c .
