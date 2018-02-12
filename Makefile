@@ -22,5 +22,5 @@ source:
 .PHONY: clean
 
 clean:
-	@rm -rf myshark .libs
+	@rm -rf myshark
 
