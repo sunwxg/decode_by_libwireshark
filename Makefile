@@ -3,12 +3,7 @@ WIRESHARK_VERSION=2.4.4
 CFLAGS+= -std=c99 -g -Wall
 CFLAGS+= `pkg-config --cflags glib-2.0`
 CFLAGS+= -I./wireshark-${WIRESHARK_VERSION}
-#CFLAGS+= -I/usr/include
-#CFLAGS+= -I./
-#CFLAGS+= -I./include
-#CFLAGS+= -I./include/wireshark
-#CFLAGS+= -I./include/wireshark/wiretap
-#LDFLAGS= -L./libs
+CFLAGS+= -I./
 LDFLAGS= -lwiretap -lwireshark -lwsutil -lglib-2.0
 #LDFLAGS+= -Wl,-rpath,./libs
 

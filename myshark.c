@@ -11,17 +11,11 @@
 
 #include <glib.h>
 
-#include <wireshark/epan/epan.h>
-#include <wireshark/epan/print.h>
-/*#include <wireshark/epan/print_stream.h>*/
-/*#include <wireshark/epan/timestamp.h>*/
-/*#include <wireshark/epan/prefs.h>*/
-#include <wireshark/epan/column.h>
-#include <wireshark/epan/epan-int.h>
-#include <wireshark/wsutil/privileges.h>
-/*#include <wireshark/epan/ftypes/ftypes.h>*/
-/*#include <wireshark/epan/asm_utils.h>*/
-/*#include "caputils/capture-wpcap.h"*/
+#include <epan/epan.h>
+#include <epan/print.h>
+#include <epan/column.h>
+#include <epan/epan-int.h>
+#include <wsutil/privileges.h>
 
 #include "cfile.h"
 #include "frame_tvbuff.h"
@@ -146,10 +140,12 @@ gboolean read_packet(epan_dissect_t **edt_r)
 
 		edt = epan_dissect_new(cfile.epan, TRUE, TRUE);
 
+		prime_epan_dissect_with_postdissector_wanted_hfids(edt);
+
 		frame_data_set_before_dissect(&fdlocal, &cfile.elapsed_time, &cfile.ref, cfile.prev_dis);
 		cfile.ref = &fdlocal;
 
-		epan_dissect_run(edt, cfile.cd_t, &(cfile.phdr), frame_tvbuff_new(&fdlocal, buf), &fdlocal, &cfile.cinfo);
+		epan_dissect_run_with_taps(edt, cfile.cd_t, whdr, frame_tvbuff_new(&fdlocal, buf), &fdlocal, &cfile.cinfo);
 
 		frame_data_set_after_dissect(&fdlocal, &cum_bytes);
 		cfile.prev_cap = cfile.prev_dis = frame_data_sequence_add(cfile.frames, &fdlocal);
@@ -169,10 +165,7 @@ void print_each_packet_xml()
 
 	while (read_packet(&edt)) {
 
-		/*proto_tree_write_pdml(edt, stdout);*/
-		/*write_pdml_proto_tree(output_fields, protocolfilter, protocolfilter_flags, edt, stdout);*/
 		write_pdml_proto_tree(NULL, NULL, PF_NONE, edt, stdout);
-		printf("\n");
 
 		epan_dissect_free(edt);
 		edt = NULL;
