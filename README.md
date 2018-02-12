@@ -1,7 +1,7 @@
 # Decode by libwireshark
 Use libwireshark to decode pcap file and print out as XML format or Text format like tshark.
 
-#Dependencies
+# Dependencies
 * libwireshark library (version 2.4.4)
 
 * libglib2.0
